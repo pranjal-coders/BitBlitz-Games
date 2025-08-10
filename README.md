@@ -1,4 +1,4 @@
-# 🎮 GameHub - Ultimate Browser Gaming Platform
+# 🎮 BitBlitz Games - Ultimate Browser Gaming Platform
 
 A comprehensive collection of classic and modern games built with vanilla HTML, CSS, and JavaScript. Play directly in your browser with no downloads required!
 
