@@ -2892,6 +2892,47 @@ body {
     pointer-events: none;
     user-select: none;
 }
+/* Brain Teaser Styles */
+.bt-container {
+  text-align: center;
+}
+.bt-input {
+  padding: 1rem;
+  font-size: 1.2rem;
+  margin: 1rem 0;
+  border-radius: 10px;
+  border: 2px solid #4ecdc4;
+  width: 80%;
+  max-width: 400px;
+}
+.bt-buttons {
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+.bt-stats {
+  margin: 1rem;
+  color: #ffd93d;
+  font-weight: bold;
+}
+
+/* Bowling Styles */
+#bowling-canvas {
+  background: #222;
+  display: block;
+  margin: 0 auto;
+  border-radius: 10px;
+}
+.bw-controls {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+input[type=range] {
+  width: 100px;
+}
 
 
 
@@ -3032,6 +3073,18 @@ body {
     <div class="game-title">Tower Defense</div>
     <div class="game-description">Build towers to defend against waves of enemies! Strategically place different tower types to protect your base.</div>
     <button class="play-btn">Play Now</button>
+</div>
+<div class="game-card" onclick="openGame('brainteaser')">
+  <div class="game-icon">🧠</div>
+  <div class="game-title">Brain Teasers</div>
+  <div class="game-description">Solve riddles and logic puzzles with achievements.</div>
+  <button class="play-btn">Play Now</button>
+</div>
+<div class="game-card" onclick="openGame('bowling')">
+  <div class="game-icon">🎳</div>
+  <div class="game-title">Bowling Mini</div>
+  <div class="game-description">Aim, set power, and knock down pins across multiple frames.</div>
+  <button class="play-btn">Play Now</button>
 </div>
 
 
@@ -3636,6 +3689,48 @@ body {
     </div>
 </div>
 
+<!-- Brain Teaser Game Screen -->
+<div id="brainteaser-screen" class="game-screen">
+  <div class="game-container">
+    <button class="close-btn" onclick="closeGame()">&times;</button>
+    <div class="score-board">
+      <div>Brain Teasers</div>
+      <div>Score: <span id="bt-score">0</span> | Streak: <span id="bt-streak">0</span></div>
+    </div>
+    <div class="game-area">
+      <div class="bt-container">
+        <h2 id="bt-question">Press "Start" to Begin!</h2>
+        <input type="text" id="bt-answer" placeholder="Type your answer..." class="bt-input" />
+        <div class="bt-buttons">
+          <button class="primary-btn" onclick="submitBTAnswer()">Submit</button>
+          <button class="secondary-btn" onclick="skipBTQuestion()">Skip</button>
+        </div>
+        <div class="bt-stats">
+          Difficulty: <span id="bt-difficulty">Easy</span> | Achievements: <span id="bt-achievements">0</span>
+        </div>
+        <button id="bt-start-btn" class="start-game-btn" onclick="startBrainTeaser()">Start</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Bowling Game Screen -->
+<div id="bowling-screen" class="game-screen">
+  <div class="game-container">
+    <button class="close-btn" onclick="closeGame()">&times;</button>
+    <div class="score-board">
+      <div>Bowling Mini</div>
+      <div>Frame: <span id="bw-frame">1</span> | Score: <span id="bw-total-score">0</span></div>
+    </div>
+    <div class="game-area">
+      <canvas id="bowling-canvas" width="500" height="600"></canvas>
+      <div class="bw-controls">
+        Angle: <input type="range" id="bw-angle" min="-30" max="30" value="0">
+        Power: <input type="range" id="bw-power" min="5" max="15" value="10">
+        <button class="primary-btn" onclick="throwBall()">Throw</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
@@ -8323,11 +8418,144 @@ gameStates['towerdefense'] = {
         towerDefenseState.gameActive = false;
     }
 };
+// ===== Brain Teasers =====
+let btState = {
+  score: 0, streak: 0, difficulty: 0, achievements: 0, current: null
+};
+const btQuestions = {
+  easy: [
+    { q: "What has to be broken before you can use it?", a: "egg" },
+    { q: "I'm tall when young, short when old. What am I?", a: "candle" },
+  ],
+  medium: [
+    { q: "The more you take, the more you leave behind. What am I?", a: "footsteps" },
+  ],
+  hard: [
+    { q: "Forward I am heavy, backward I am not. What am I?", a: "ton" },
+  ]
+};
+function startBrainTeaser() {
+  btState = { score: 0, streak: 0, difficulty: 0, achievements: 0, current: null };
+  document.getElementById('bt-score').textContent = 0;
+  document.getElementById('bt-streak').textContent = 0;
+  getNewBTQuestion();
+}
+function getNewBTQuestion() {
+  let diff = ["easy","medium","hard"][btState.difficulty];
+  let arr = btQuestions[diff];
+  btState.current = arr[Math.floor(Math.random()*arr.length)];
+  document.getElementById('bt-question').textContent = btState.current.q;
+  document.getElementById('bt-difficulty').textContent = diff;
+  document.getElementById('bt-answer').value = "";
+}
+function submitBTAnswer(){
+  let ans = document.getElementById('bt-answer').value.trim().toLowerCase();
+  if(ans === btState.current.a){
+    btState.score += 100*(btState.difficulty+1);
+    btState.streak++;
+    if(btState.streak % 3===0 && btState.difficulty<2) btState.difficulty++;
+    if(btState.streak % 5===0) btState.achievements++;
+  } else {
+    btState.streak = 0;
+    if(btState.difficulty>0) btState.difficulty--;
+  }
+  updateBTUI();
+  getNewBTQuestion();
+}
+function skipBTQuestion(){
+  btState.streak = 0;
+  updateBTUI();
+  getNewBTQuestion();
+}
+function updateBTUI(){
+  document.getElementById('bt-score').textContent = btState.score;
+  document.getElementById('bt-streak').textContent = btState.streak;
+  document.getElementById('bt-achievements').textContent = btState.achievements;
+}
 
+// ===== Bowling =====
+let bwState = {
+  frame: 1, roll: 1, scores: [], total:0, pins: []
+};
+let bwCtx = null;
+function initBowling(){
+  bwCtx = document.getElementById('bowling-canvas').getContext('2d');
+  resetPins();
+  drawBowling();
+}
+function resetPins(){
+  bwState.pins=[];
+  let startX = 250, startY = 100, spacing = 30;
+  let count=1;
+  for(let row=0;row<4;row++){
+    for(let i=0;i<=row;i++){
+      bwState.pins.push({x:startX-(row*spacing/2)+i*spacing,y:startY+row*spacing,hit:false});
+    }
+  }
+}
+function drawBowling(){
+  bwCtx.clearRect(0,0,500,600);
+  // lane
+  bwCtx.fillStyle="#b5651d";
+  bwCtx.fillRect(200,0,100,600);
+  // pins
+  bwCtx.fillStyle="white";
+  bwState.pins.forEach(p=>{
+    if(!p.hit) bwCtx.beginPath(),bwCtx.arc(p.x,p.y,8,0,Math.PI*2),bwCtx.fill();
+  });
+}
+function throwBall(){
+  let angle = parseInt(document.getElementById('bw-angle').value);
+  let power = parseInt(document.getElementById('bw-power').value);
+  let bx=250, by=550, vy = -power, vx = angle/5;
+  let interval=setInterval(()=>{
+    drawBowling();
+    bwCtx.fillStyle="black";
+    bwCtx.beginPath();bwCtx.arc(bx,by,10,0,Math.PI*2);bwCtx.fill();
+    bx+=vx; by+=vy; vy += 0.1;
+    bwState.pins.forEach(pin=>{
+      if(!pin.hit){
+        let dx=pin.x-bx, dy=pin.y-by;
+        if(Math.sqrt(dx*dx+dy*dy)<12){ pin.hit=true; }
+      }
+    });
+    if(by<50){
+      clearInterval(interval);
+      scoreBowling();
+    }
+  },16);
+}
+function scoreBowling(){
+  let hitCount = bwState.pins.filter(p=>p.hit).length;
+  bwState.scores.push(hitCount);
+  bwState.total += hitCount;
+  document.getElementById('bw-total-score').textContent = bwState.total;
+  bwState.frame++;
+  document.getElementById('bw-frame').textContent = bwState.frame;
+  if(bwState.frame>10){
+    alert("Game Over! Total Score: "+bwState.total);
+    bwState.frame=1; bwState.total=0; bwState.scores=[];
+  }
+  resetPins();
+  drawBowling();
+}
+
+
+function openGame(gameType){
+  currentGame=gameType;
+  document.getElementById('home-screen').style.display='none';
+  document.getElementById(gameType+'-screen').style.display='block';
+  if(gameType==='brainteaser') startBrainTeaser();
+  else if(gameType==='bowling') initBowling();
+}
+
+
+        
 
 
 
     </script>
 </body>
 </html>
+
 
